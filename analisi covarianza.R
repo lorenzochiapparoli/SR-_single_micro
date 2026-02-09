@@ -135,4 +135,4 @@ tabella_pub <- emm_df %>%
 
 print(tabella_pub)
 
-#write_xlsx(tabella_pub, "tukey_medie_corrette.xlsx")
+##write_xlsx(tabella_pub, "tukey_medie_corrette.xlsx")
