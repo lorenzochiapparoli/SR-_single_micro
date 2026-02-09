@@ -63,8 +63,9 @@ ancova_xl <- lm(
 )
 
 emm <- emmeans(ancova_ac, ~ Trial | Micro)
-pw  <- pairs(emm, adjust = "lsd")
+pw  <- pairs(emm, adjust = "tukey")
 
 plot(pw)
 plot(emm, comparisons = TRUE)
 emmip(ancova_ac, Micro ~ Trial, CIs = TRUE)
+
