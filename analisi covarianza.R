@@ -21,6 +21,7 @@ summary(anova_mck)
 #ANCOVA 
 
 ancova_ac <- aov(arc_mck ~ Micro*Trial+Acetic+EtOH+`G+F`, data = Df)
+
 summary(ancova_ac)
 anova(ancova_ac)
 
@@ -136,3 +137,75 @@ tabella_pub <- emm_df %>%
 print(tabella_pub)
 
 ###write_xlsx(tabella_pub, "tukey_medie_corrette.xlsx")
+
+##########################################################################################################
+df_emm_sev <- df_emm %>% 
+  dplyr:: select(c("Trial", "Micro","emmean"))
+
+
+df_emm_sev_wide <- df_emm_sev %>% 
+  pivot_wider(names_from = Trial,
+              values_from = emmean)
+
+means_df_emm <- df_emm_sev_wide %>%
+  group_by(Micro) %>%
+  summarise(
+    T1 = mean(`1`, na.rm = TRUE),
+    T2 = mean(`2`, na.rm = TRUE),
+    T3 = mean(`3`, na.rm = TRUE),
+    T4 = mean(`4`, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+mat <- as.matrix(means_df_emm[,-1])
+rownames(mat) <- means_df_emm$Micro
+
+mat_scaled <- scale(mat)
+hc <- hclust(dist(mat_scaled), method="ward.D2")
+plot(hc, horiz = TRUE)
+
+lsd_sev <- LSD.test(ancova_ac, "Micro")
+df_lsd <- as.data.frame(lsd_sev$groups)
+df_lsd <- rownames_to_column(df_lsd, var = "Micro")
+
+medie_ordine <- df_emm_sev %>% 
+  group_by(Micro) %>% 
+  summarise(media_sev = mean(emmean)) %>% 
+  arrange(desc(media_sev))
+
+
+
+df_emm_sev$Micro <- factor(df_emm_sev$Micro, 
+                   levels = medie_ordine$Micro[order(medie_ordine$media_sev, decreasing = TRUE)])
+
+
+p <- ggplot(df_emm_sev, aes(x = Micro, y = emmean)) +
+  geom_boxplot(outlier.shape = NA, fill = "grey") +
+  geom_jitter(
+    aes(color = Trial),
+    width = 0.15,
+    size = 3.5,
+    alpha = 0.6
+  ) +
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    shape = 4,        # X shape (Excel-like)
+    size = 2,
+    stroke = 0.7,     # thickness of the X
+    color = "black"
+  ) +
+  scale_color_manual(values = c(
+    "1" = "orange",
+    "2" = "blue",
+    "3" = "green",
+    "4" = "red"
+  )) +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(
+      angle = 30,
+      hjust = 1   # allinea meglio quando si ruota
+    ))
+  
+p
