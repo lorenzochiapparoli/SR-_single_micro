@@ -8,6 +8,7 @@ library(openxlsx)
 library(emmeans)
 library(multcomp)
 library(multcompView)
+library(agricolae)
 
 Df <- read_excel("dataset microorganismi singoli.xlsx", sheet = 2) 
 Df$Trial <- factor(Df$Trial)
@@ -21,8 +22,12 @@ summary(anova_mck)
 #ANCOVA 
 
 ancova_ac <- aov(arc_mck ~ Micro*Trial+Acetic+EtOH+`G+F`, data = Df)
-
 summary(ancova_ac)
+lsd_sev <- LSD.test(ancova_ac, c("Micro", "Trial"))
+
+
+
+
 anova(ancova_ac)
 
 emm <- emmeans(ancova_ac, ~ Trial | Micro)
@@ -30,8 +35,8 @@ df_emm <- as.data.frame(emm)
 
 pairs(emmeans(ancova_ac, ~ Trial | Micro))
 
-
-####################################### TABELLA varianza spiegata NO RESIDUI
+#######################################################################################################################
+##################################################################################### TABELLA varianza spiegata NO RESIDUI
 
 aov_sum <- summary(ancova_ac)[[1]]
 resid_rows <- grep("Residuals", rownames(aov_sum), ignore.case = TRUE)
@@ -64,6 +69,8 @@ ancova_xl <- lm(
   arc_mck ~ Micro + Trial + Acetic + EtOH + `G+F`,
   data = Df
 )
+
+#########################################################################################
 
 emm <- emmeans(ancova_ac, ~ Trial | Micro)
 pw  <- pairs(emm, adjust = "tukey")
@@ -206,6 +213,14 @@ p <- ggplot(df_emm_sev, aes(x = Micro, y = emmean)) +
     axis.text.x = element_text(
       angle = 30,
       hjust = 1   # allinea meglio quando si ruota
-    ))
+    )) +
+  ylim(0, 80)+ 
+  geom_text(
+    data = df_lsd,
+    aes(x = Micro, y = arc_mck + 15, label = groups),
+    inherit.aes = FALSE,
+    size = 5
+  )
+
   
 p
